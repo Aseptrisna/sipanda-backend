@@ -3,4 +3,4 @@ dist
 coverage
 .env
 *.log
-uploads/
+/uploads/
