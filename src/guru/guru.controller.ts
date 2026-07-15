@@ -52,4 +52,10 @@ export class GuruController {
   remove(@Param('id', ParseObjectIdPipe) id: string) {
     return this.guruService.remove(id);
   }
+
+  @Post(':id/reset-password')
+  @Roles(Role.SUPER_ADMIN)
+  resetPassword(@Param('id', ParseObjectIdPipe) id: string) {
+    return this.guruService.resetPassword(id);
+  }
 }

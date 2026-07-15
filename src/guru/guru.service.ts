@@ -84,4 +84,9 @@ export class GuruService {
 
     return guru;
   }
+
+  async resetPassword(id: string) {
+    const guru = await this.findOne(id);
+    return this.usersService.resetPasswordByEmail(guru.email);
+  }
 }

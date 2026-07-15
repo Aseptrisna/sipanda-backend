@@ -52,4 +52,10 @@ export class OrangTuaController {
   remove(@Param('id', ParseObjectIdPipe) id: string) {
     return this.orangTuaService.remove(id);
   }
+
+  @Post(':id/reset-password')
+  @Roles(Role.SUPER_ADMIN)
+  resetPassword(@Param('id', ParseObjectIdPipe) id: string) {
+    return this.orangTuaService.resetPassword(id);
+  }
 }

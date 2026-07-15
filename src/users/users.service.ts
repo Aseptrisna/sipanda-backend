@@ -8,6 +8,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'crypto';
 import { User, UserDocument } from './schemas/user.schema';
 import { Role } from '../common/enums/role.enum';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -79,5 +80,18 @@ export class UsersService {
     user.password_hash = await bcrypt.hash(dto.password_baru, 10);
     await user.save();
     return { message: 'Password berhasil diubah' };
+  }
+
+  async resetPasswordByEmail(email: string) {
+    const user = await this.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException('Akun untuk email ini tidak ditemukan');
+    }
+
+    const generatedPassword = randomBytes(6).toString('base64url');
+    user.password_hash = await bcrypt.hash(generatedPassword, 10);
+    await user.save();
+
+    return { email: user.email, generated_password: generatedPassword };
   }
 }

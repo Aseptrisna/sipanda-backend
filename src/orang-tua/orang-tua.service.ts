@@ -85,4 +85,9 @@ export class OrangTuaService {
 
     return orangTua;
   }
+
+  async resetPassword(id: string) {
+    const orangTua = await this.findOne(id);
+    return this.usersService.resetPasswordByEmail(orangTua.email);
+  }
 }
