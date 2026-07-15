@@ -1,5 +1,6 @@
 import { HttpService } from '@nestjs/axios';
 import {
+  HttpException,
   Injectable,
   Logger,
   ServiceUnavailableException,
@@ -49,11 +50,21 @@ export class FaceRecognitionClientService {
     fotoUrls: string[],
     namaDisplay?: string,
   ): Promise<UploadTrainingResponse> {
-    return this.request<UploadTrainingResponse>('post', '/training/upload', {
-      student_id: studentId,
-      foto_urls: fotoUrls,
-      nama_display: namaDisplay,
-    });
+    // face-service downloads every foto_url sequentially before responding
+    // (see app/routes/training.py upload_training_photos) — the module-wide
+    // 10s timeout is fine for /inference/match's single image but is too
+    // tight for a batch of photos (e.g. 20), so this call gets a longer,
+    // explicit timeout instead of racing the shared default.
+    return this.request<UploadTrainingResponse>(
+      'post',
+      '/training/upload',
+      {
+        student_id: studentId,
+        foto_urls: fotoUrls,
+        nama_display: namaDisplay,
+      },
+      60_000,
+    );
   }
 
   async triggerTraining(
@@ -85,6 +96,7 @@ export class FaceRecognitionClientService {
     method: 'get' | 'post' | 'delete',
     path: string,
     data?: unknown,
+    timeoutMs?: number,
   ): Promise<T> {
     try {
       const response = await firstValueFrom(
@@ -92,17 +104,30 @@ export class FaceRecognitionClientService {
           method,
           url: `${this.baseUrl}${path}`,
           data,
+          ...(timeoutMs !== undefined ? { timeout: timeoutMs } : {}),
         }),
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       this.logger.error(
         `Gagal memanggil face-service [${method.toUpperCase()} ${path}]: ${axiosError.message}`,
         axiosError.response
           ? JSON.stringify(axiosError.response.data)
           : axiosError.stack,
       );
+
+      // face-service actually responded (4xx/5xx) — surface its real status
+      // and message instead of masking it as a generic "unreachable" error,
+      // otherwise e.g. a 409 "training lain sedang berjalan" looks identical
+      // to face-service being down to the frontend.
+      if (axiosError.response) {
+        throw new HttpException(
+          axiosError.response.data?.detail ?? axiosError.message,
+          axiosError.response.status,
+        );
+      }
+
       throw new ServiceUnavailableException(
         `Face recognition service tidak dapat dihubungi: ${axiosError.message}`,
       );
