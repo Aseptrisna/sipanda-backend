@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -21,6 +22,8 @@ import { AuthenticatedUser } from '../common/decorators/current-user.decorator';
 
 @Injectable()
 export class IzinService {
+  private readonly logger = new Logger(IzinService.name);
+
   constructor(
     @InjectModel(Izin.name) private readonly izinModel: Model<IzinDocument>,
     @InjectModel(Siswa.name) private readonly siswaModel: Model<SiswaDocument>,
@@ -132,8 +135,11 @@ export class IzinService {
         izin.status,
         izin.catatan,
       );
-    } catch {
-      // gagal kirim email tidak boleh menggagalkan proses izin
+    } catch (error) {
+      this.logger.error(
+        `Gagal mengirim notifikasi izin diproses: ${(error as Error).message}`,
+        (error as Error).stack,
+      );
     }
   }
 }

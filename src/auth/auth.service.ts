@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
@@ -26,6 +26,8 @@ interface RefreshTokenPayload {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
@@ -113,8 +115,10 @@ export class AuthService {
         { jti: payload.jti },
         { revoked: true },
       );
-    } catch {
-      // Token sudah tidak valid — tidak perlu error, logout tetap dianggap berhasil
+    } catch (error) {
+      this.logger.warn(
+        `Logout dengan refresh token tidak valid: ${(error as Error).message}`,
+      );
     }
   }
 

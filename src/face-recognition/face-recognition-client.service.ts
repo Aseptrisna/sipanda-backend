@@ -1,5 +1,9 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AxiosError } from 'axios';
 import { firstValueFrom } from 'rxjs';
@@ -29,6 +33,8 @@ export interface InferenceMatchResponse {
 
 @Injectable()
 export class FaceRecognitionClientService {
+  private readonly logger = new Logger(FaceRecognitionClientService.name);
+
   constructor(
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
@@ -91,6 +97,12 @@ export class FaceRecognitionClientService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError;
+      this.logger.error(
+        `Gagal memanggil face-service [${method.toUpperCase()} ${path}]: ${axiosError.message}`,
+        axiosError.response
+          ? JSON.stringify(axiosError.response.data)
+          : axiosError.stack,
+      );
       throw new ServiceUnavailableException(
         `Face recognition service tidak dapat dihubungi: ${axiosError.message}`,
       );
