@@ -3,10 +3,12 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { Guru, GuruSchema } from './schemas/guru.schema';
 import { GuruService } from './guru.service';
 import { GuruController } from './guru.controller';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Guru.name, schema: GuruSchema }]),
+    UsersModule,
   ],
   providers: [GuruService],
   controllers: [GuruController],
