@@ -16,7 +16,7 @@ const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 export class UploadsController {
   @Post('photos')
   @UseInterceptors(
-    FilesInterceptor('files', 20, {
+    FilesInterceptor('files', 60, {
       storage: diskStorage({
         destination: './uploads',
         filename: (_req, file, callback) => {

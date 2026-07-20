@@ -53,7 +53,7 @@ export class FaceRecognitionClientService {
     // face-service downloads every foto_url sequentially before responding
     // (see app/routes/training.py upload_training_photos) — the module-wide
     // 10s timeout is fine for /inference/match's single image but is too
-    // tight for a batch of photos (e.g. 20), so this call gets a longer,
+    // tight for a batch of photos (up to 60), so this call gets a longer,
     // explicit timeout instead of racing the shared default.
     return this.request<UploadTrainingResponse>(
       'post',
@@ -63,7 +63,7 @@ export class FaceRecognitionClientService {
         foto_urls: fotoUrls,
         nama_display: namaDisplay,
       },
-      60_000,
+      180_000,
     );
   }
 
